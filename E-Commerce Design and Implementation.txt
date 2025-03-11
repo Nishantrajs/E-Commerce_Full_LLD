@@ -1,0 +1,543 @@
+import java.util.*;
+
+class Amazon
+{
+    String eCommerceId;
+    String HeadQuarter;
+    String CEO;
+    Location location;
+    Map<City, WareHouse> map;
+    
+    public Amazon(String eCommerceId, String HeadQuarter, String CEO, Location location)
+    {
+        this.eCommerceId = eCommerceId;
+        this.HeadQuarter = HeadQuarter;
+        this.CEO = CEO;
+        this.location = location;
+        map = new HashMap<>();
+    }
+    
+    public void addWareHouse(City city, WareHouse WareHouse)
+    {
+       map.put(city,WareHouse);
+    }
+}
+
+class Location{
+    
+    String address;
+    String city;
+    String State;
+    String Country;
+    String PinCode;
+    
+    public Location(String address, String city, String State, String Country, String PinCode)
+    {
+        this.address = address;
+        this.city = city;
+        this.State = State;
+        this.Country = Country;
+        this.PinCode = PinCode;
+    }
+}
+
+class City 
+{
+    String CityName;
+    String CityPinCode;
+    
+    public City(String CityName, String CityPinCode)
+    {
+        this.CityName = CityName;
+        this.CityPinCode = CityPinCode;
+    }
+}
+
+abstract class WareHouse
+{
+    String WareHouseID;
+    String WareHousePinCode;
+    abstract Product Search(String productName);
+}
+
+class WareHouseImpl extends WareHouse
+{
+    ProductManager productManager;
+    
+    public WareHouseImpl(String WareHouseID, String WareHousePinCode, ProductManager productManager)
+    {
+        this.WareHouseID = WareHouseID;
+        this.WareHousePinCode = WareHousePinCode;
+        this.productManager = productManager;
+    }
+    
+    @Override
+    public Product Search(String productName)
+    {
+        return productManager.searchProducts(productName);
+    }
+}
+
+interface ProductManager
+{
+    public Product searchProducts(String productName);
+    public List<Product> getAllProducts();
+    public void addProduct(Product product);
+    public void removeProduct(String productID);
+    public void updateProduct(String productID);
+    public Product bookProduct(Customer customer, String productID);
+    public Product cancelProduct(String product);
+}
+
+class ProductImpl implements ProductManager
+{
+    List<Product> productsList;
+    Notifications notification;
+    
+    public ProductImpl(Notifications notification)
+    {
+        productsList = new ArrayList<>();
+        this.notification = notification;
+    }
+    
+    @Override
+    public Product searchProducts(String productName)
+    {
+        for(Product product : productsList)
+        {
+            if(product.getProductName().equals(productName))
+            {
+                return product;
+            }
+        }
+        
+        return null;
+    }
+    
+    @Override
+    public List<Product> getAllProducts()
+    {
+        List<Product> availableProductList = new ArrayList<>();
+        
+        for(Product product : productsList)
+        {
+            if(product.getIsAvailable())
+            {
+              availableProductList.add(product);  
+            }
+        }
+        
+        return availableProductList;
+    }
+    
+    @Override 
+    public void addProduct(Product product)
+    {
+        productsList.add(product);
+    }
+    
+    @Override
+    public void removeProduct(String productID)
+    {
+        Iterator<Product> iterator = productsList.iterator();
+        while (iterator.hasNext()) {
+            Product product = iterator.next();
+            if (product.getProductID().equals(productID)) {
+                iterator.remove();  // Safely remove the product
+            }
+        }
+    }
+
+    
+    @Override
+    public void updateProduct(String productID)
+    {
+         for(Product product : productsList)
+        {
+            if(product.getProductID().equals(productID))
+            {
+                System.out.println("The Product List has been Updated !!");
+                //productsList.remove(product);
+            }
+        }
+    }
+    
+    @Override
+    public Product bookProduct(Customer customer, String productID)
+    {
+        Boolean checkIfavailable = false;
+        
+        for(Product product : productsList)
+        {
+            if(product.getProductID().equals(productID))
+            {
+                product.SetIsAvailable(false);
+                checkIfavailable = true;
+                System.out.println("The Product has been Booked !!");
+                return product;
+            }
+        }
+        
+        if(!checkIfavailable)
+        {
+            notification.addCustomer(customer, productID);
+            System.out.println("Customer is added in notification");
+        }
+        
+        return null;
+    }
+    
+    @Override 
+    public Product cancelProduct(String productID)
+    {
+        for(Product product : productsList)
+        {
+            if(product.getProductID().equals(productID))
+            {
+                product.SetIsAvailable(true);
+                System.out.println("The Product has been Cancelled !!");
+                return product;
+            }
+        }
+        
+        return null;
+    }
+}
+
+class Product 
+{
+    String productName;
+    String productType;
+    String productPID;
+    String productSpecifications;
+    Double productPrice;
+    Double productdiscountedPrice;
+    Boolean IsAvailable;
+    
+    public Product(String productName, String productType, String productPID, String productSpecifications, Double productPrice, Double productdiscountedPrice)
+    {
+        this.productName = productName;
+        this.productType = productType;
+        this.productPID = productPID;
+        this.productSpecifications = productSpecifications;
+        this.productPrice = productPrice;
+        this.productdiscountedPrice = productdiscountedPrice;
+        this.IsAvailable = true;
+    }
+    
+    public String getProductID()
+    {
+        return productPID;
+    }
+    
+    public String getProductName()
+    {
+        return productName;
+    }
+    
+    public Boolean getIsAvailable()
+    {
+        return IsAvailable;
+    }
+    
+    public void SetIsAvailable(Boolean isBooked)
+    {
+        IsAvailable = isBooked;
+    }
+}
+
+interface Person 
+{
+    String getName();
+    String getPhoneNumber();
+    String getAadhar();
+}
+
+class Customer implements Person 
+{
+    private String name;
+    private String phoneNumber;
+    private String aadhar;
+    ProductManager productManager;
+    
+    List<Product> bookedList;
+    List<NotificationAlertObserver> observers;
+
+    public Customer(String name, String phoneNumber, String aadhar, ProductManager productManager)
+    {
+        this.name = name;
+        this.phoneNumber = phoneNumber;
+        this.aadhar = aadhar;
+        this.productManager = productManager;
+        
+        bookedList = new ArrayList<>();
+        observers = new ArrayList<>();
+    }
+    
+      @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    @Override
+    public String getAadhar() {
+        return aadhar;
+    }
+    
+    public void bookProduct(Customer customer,String productID)
+    {
+        Product bookedProduct = productManager.bookProduct(customer,productID);
+        bookedList.add(bookedProduct);
+    }
+    
+    public void cancelProduct(String productID)
+    {
+        Product cancelledProduct = productManager.cancelProduct(productID);
+        
+        for(Product product : bookedList)
+        {
+            if(product.getProductID().equals(productID))
+            {
+                bookedList.remove(product);
+            }
+        }
+    }
+    
+    public List<Product> getAllBookedProductList()
+    {
+        return bookedList;
+    }
+    
+    public void addObserver(NotificationAlertObserver observer)
+    {
+        observers.add(observer);
+    }
+    
+    public void notifyObservers()
+    {
+        for(NotificationAlertObserver observer : observers)
+        {
+            observer.update();
+        }
+    }
+}
+
+class Admin implements Person 
+{
+    private String name;
+    private String phoneNumber;
+    private String aadhar;
+    ProductManager productManager;
+    Notifications notification;
+    
+    public Admin(String name, String phoneNumber, String aadhar, ProductManager productManager,  Notifications notification)
+    {
+        this.name = name;
+        this.phoneNumber = phoneNumber;
+        this.aadhar = aadhar;
+        this.productManager = productManager;
+        this.notification = notification;
+    }
+    
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    @Override
+    public String getAadhar() {
+        return aadhar;
+    }
+    
+    public void addProduct(Product product)
+    {
+        productManager.addProduct(product);
+        
+        notification.notifyCustomers(product.getProductID());
+    }
+    
+    public void removeProduct(String productID)
+    {
+        productManager.removeProduct(productID);
+    }
+    
+    public void updateProduct(String productID)
+    {
+        productManager.removeProduct(productID);
+    }
+}
+
+interface Notifications
+{
+    public void addCustomer(Customer customer, String productID);
+    public void removeCustomer(String customerID);
+    public void notifyCustomers(String productID);
+}
+
+class NotificationImpl implements Notifications
+{
+    Map<String, List<Customer>> customersList;
+    
+    public NotificationImpl()
+    {
+        customersList  = new HashMap<>();
+    }
+    
+    @Override
+    public void addCustomer(Customer customer, String productID)
+    {
+        List<Customer> totalCustomers = new ArrayList<>();
+        
+        if(customersList.containsKey(productID))
+        {
+            totalCustomers = customersList.get(productID);
+            totalCustomers.add(customer);
+            customersList.put(productID, totalCustomers);
+        }
+        else 
+        {
+            totalCustomers.add(customer);
+            customersList.put(productID, totalCustomers);
+        }
+    }
+    
+    @Override
+    public void removeCustomer(String customerAadhar)
+    {
+        // for(Customer customer : customersList)
+        // {
+        //     if(customer.getAadhar().equals(customerAadhar))
+        //     {
+        //         customersList.remove(customer);
+        //     }
+        // }
+    }
+    
+    @Override 
+    public void notifyCustomers(String productID)
+    {
+        List<Customer> NotifyCustomerList = new ArrayList<>();
+        
+        if(customersList.containsKey(productID))
+        NotifyCustomerList = customersList.get(productID);
+        
+        for(Customer customer : NotifyCustomerList)
+        {
+            customer.notifyObservers();
+        }
+    }
+}
+
+interface NotificationAlertObserver
+{
+    public void update();
+}
+
+
+class EmailAlertObserver implements NotificationAlertObserver {
+    private String email;
+    
+    public EmailAlertObserver(String email) {
+        this.email = email;
+    }
+
+    @Override
+    public void update() {
+        System.out.println("Sending email to " + email + ": Your product is now available.");
+    }
+}
+
+class PhoneAlertObserver implements NotificationAlertObserver {
+    private String PhoneNo;
+    
+    public PhoneAlertObserver(String PhoneNo) {
+        this.PhoneNo = PhoneNo;
+    }
+
+    @Override
+    public void update() {
+        System.out.println("Sending email to " + PhoneNo + ": Your product is now available.");
+    }
+}
+
+
+
+class Main {
+  public static void main(String[] args) 
+  {
+      Location location = new Location("Anisabad", "Patna", "Bihar", "India", "800002");
+      
+      City city = new City("Patna", "800002");
+      
+      Notifications notification = new NotificationImpl();
+      ProductManager productManger = new ProductImpl(notification);
+      
+      WareHouse warehouse = new WareHouseImpl("1", "1001", productManger);
+      Admin admin = new Admin("Anjani", "9431047381", "6445641512", productManger, notification);
+      
+      Amazon amazon = new Amazon("1", "New-York", "Jeff-Bezoz", location);
+      
+      
+      Product p1 = new Product("Iphone-16", "Mobile", "1", "Best", 10000.00, 20.0);
+      Product p2 = new Product("Iphone-15", "Mobile", "2", "Best", 5000.00, 20.0);
+      Product p3 = new Product("Iphone-14", "Mobile", "3", "Best", 3000.00, 10.0);
+      
+      admin.addProduct(p1);
+      admin.addProduct(p2);
+      admin.addProduct(p3);
+      
+      List<Product> productList = productManger.getAllProducts();
+      
+      for(Product product: productList)
+      {
+          System.out.println("The name of Product is" + product.getProductName());
+          System.out.println("The Type of the Product is" + product.getProductID());
+          System.out.println("------------------------------------------------------");
+      }
+      
+      Customer c1 = new Customer("Nishant", "7004458490","991579853619", productManger);
+      c1.bookProduct(c1,"1");
+      admin.removeProduct("1");
+      
+      List<Product> bookedProductList = c1.getAllBookedProductList();
+      
+      for(Product product : bookedProductList)
+      {
+          System.out.println("The name of Product is" + product.getProductName());
+          System.out.println("The Type of the Product is" + product.getProductID());
+          System.out.println("------------------------------------------------------");
+      }
+      
+      productList = productManger.getAllProducts();
+      
+      for(Product product: productList)
+      {
+          System.out.println("The name of Product is" + product.getProductName());
+          System.out.println("The Type of the Product is" + product.getProductID());
+          System.out.println("------------------------------------------------------");
+      }
+      
+      Customer c4 = new Customer("Ritika", "6216166106", "555415415415", productManger);
+      c4.bookProduct(c4, "1");
+      
+      NotificationAlertObserver observer1 = new EmailAlertObserver("nishantraj839@gmail.com");
+      NotificationAlertObserver observer2 = new PhoneAlertObserver("7004458490");
+      
+      c4.addObserver(observer1);
+      c4.addObserver(observer2);
+      
+      Product p4 = new Product("Iphone-16", "Mobile", "1", "Best", 10000.00, 20.0);
+      admin.addProduct(p4);
+      
+  }
+}
