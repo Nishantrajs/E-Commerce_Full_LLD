@@ -1,0 +1,618 @@
+import java.util.*;
+
+class Bank 
+{
+    String BankID;
+    String BankName;
+    Location location;
+    
+    CustomerController customerController;
+    ATMController atmController;
+    
+    public Bank(String BankID, String BankName, Location location, ATMController atmController, CustomerController customerController)
+    {
+        this.BankID = BankID;
+        this.BankName = BankName;
+        this.location = location;
+        this.atmController = atmController;
+        this.customerController = customerController;
+    }
+}
+
+class Location
+{
+    String name;
+    String city;
+    String state;
+    String pincode;
+    
+    public Location(String name, String city, String state, String pincode)
+    {
+        this.name = name;
+        this.city = city;
+        this.state = state;
+        this.pincode = pincode;
+    }
+}
+
+interface ATMController 
+{
+    public void addATM(ATM atm);
+    public void removeATM(String atmID);
+    public void addMoney(String uniqueATMID, Long amountAdded);
+    public String withDrawMoney(String uniqueATMID,Card card,Long desiredAmount);
+    public void displayATMInformation(String uniqueATMID);
+}
+
+class AtmImpl implements ATMController
+{
+    List<ATM> atmList;
+    CardController cardController;
+    Notifications notifications;
+    
+    public AtmImpl(CardController cardController, Notifications notifications)
+    {
+        atmList = new ArrayList<>();
+        this.cardController = cardController;
+        this.notifications = notifications;
+    }
+    
+    @Override
+    public void addATM(ATM atm)
+    {
+        atmList.add(atm);
+    }
+    
+    @Override
+    public void removeATM(String atmID)
+    {
+        for(ATM atm : atmList)
+        {
+            if(atm.getUniqueATMID().equals(atmID))
+            {
+                atmList.remove(atm);
+            }
+        }
+    }
+    
+    @Override
+    public void addMoney(String uniqueATMID, Long amountAdded)
+    {
+        for(ATM atm: atmList)
+        {
+            if(atm.getUniqueATMID().equals(uniqueATMID))
+            {
+                Long atmAmount = atm.getBalanceAmount();
+                atm.setBalanceAmount(atmAmount+amountAdded);
+            }
+        }
+    }
+    
+    @Override
+    public String withDrawMoney(String uniqueATMID,Card card,Long desiredAmount)
+    {
+        for(ATM atm: atmList)
+        {
+            if(atm.getUniqueATMID().equals(uniqueATMID) && cardController.searchCard(card.getCardNumber()))
+            {
+                if(atm.getBalanceAmount()-desiredAmount >= 0)
+                {
+                    atm.setBalanceAmount(atm.getBalanceAmount() - desiredAmount);
+                    
+                    notifications.notifyCustomers(card.getCustomerID());
+                    return "Amount WithDrawn !!";
+                }
+            }
+        }
+        
+        return "Cash Cannot be Dispensed!!";
+    }
+    
+    @Override
+    public void displayATMInformation(String uniqueATMID)
+    {
+          for(ATM atm: atmList)
+          {
+              if(atm.getUniqueATMID().equals(uniqueATMID))
+              {
+                  System.out.println(atm.getUniqueATMID());
+                  System.out.println(atm.getBankName());
+                  System.out.println(atm.getLocation());
+                  System.out.println(atm.getBalanceAmount());
+              }
+          }
+    }
+}
+
+
+class ATM 
+{
+    String uniqueATMID;
+    String bankName;
+    Location location;
+    Long balanceAmount;
+    
+    public ATM(String uniqueATMID, String bankName, Location location, Long balanceAmount)
+    {
+        this.uniqueATMID = uniqueATMID;
+        this.bankName = bankName;
+        this.location = location;
+        this.balanceAmount = balanceAmount;
+    }
+    
+    public String getUniqueATMID() {
+        return uniqueATMID;
+    }
+
+    public String getBankName() {
+        return bankName;
+    }
+
+    public Location getLocation() {
+        return location;
+    }
+
+    public Long getBalanceAmount() {
+        return balanceAmount;
+    }
+
+    public void setUniqueATMID(String uniqueATMID) {
+        this.uniqueATMID = uniqueATMID;
+    }
+
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
+    }
+
+    public void setLocation(Location location) {
+        this.location = location;
+    }
+
+    public void setBalanceAmount(Long balanceAmount) {
+        this.balanceAmount = balanceAmount;
+    }
+}
+
+interface CustomerController
+{
+     public void addCustomer(Customer customer);
+     public void removeCustomer(String customerID);
+}
+
+class CustomerImpl implements CustomerController
+{
+    List<Customer> customersList;
+    Notifications notification;
+    
+    public CustomerImpl(Notifications notification)
+    {
+        customersList = new ArrayList<>();
+        this.notification = notification;
+    }
+    
+    @Override
+    public void addCustomer(Customer customer)
+    {
+        customersList.add(customer);
+        notification.addCustomer(customer);
+    }
+    
+    @Override
+    public void removeCustomer(String customerID)
+    {
+        for(Customer customer : customersList)
+        {
+            if(customer.getCustomerID().equals(customerID))
+            {
+                customersList.remove(customer);
+            }
+        }
+    }
+}
+
+interface Notifications 
+{
+    public void addCustomer(Customer customer);
+    public void removeCustomer(String customerID);
+    public void notifyCustomers(String customerID);
+}
+
+class NotificationImpl implements Notifications
+{
+    List<Customer> customersList;
+    
+    public NotificationImpl()
+    {
+        customersList = new ArrayList<>();
+    }
+    
+    @Override
+    public void addCustomer(Customer customer)
+    {
+        customersList.add(customer);
+    }
+    
+    @Override
+    public void removeCustomer(String customerID)
+    {
+        for(Customer customer : customersList)
+        {
+            if(customer.getCustomerID().equals(customerID))
+            {
+                customersList.remove(customer);
+            }
+        }
+    }
+    
+    @Override
+    public void notifyCustomers(String customerID)
+    {
+        for(Customer customer: customersList)
+        {
+            if(customer.getCustomerID().equals(customerID))
+            {
+                customer.notifyObservers();   
+            }
+        }
+    }
+}
+class Customer 
+{
+    String customerID;
+    String customerName;
+    String aadharCard;
+    String phoneNumber;
+    AccountController accountController;
+    List<NotificationAlertObserver> observers;
+
+    public Customer(String customerID, String customerName, String aadharCard, String phoneNumber, AccountController accountController) 
+    {
+        this.customerID = customerID;
+        this.customerName = customerName;
+        this.aadharCard = aadharCard;
+        this.phoneNumber = phoneNumber;
+        this.accountController = accountController;
+        
+        observers = new ArrayList<>();
+    }
+
+    public String getCustomerID() 
+    {
+        return customerID;
+    }
+
+    public void setCustomerID(String customerID)
+    {
+        this.customerID = customerID;
+    }
+
+    public String getCustomerName()
+    {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName)
+    {
+        this.customerName = customerName;
+    }
+
+    public String getAadharCard()
+    {
+        return aadharCard;
+    }
+
+    public void setAadharCard(String aadharCard)
+    {
+        this.aadharCard = aadharCard;
+    }
+
+    public String getPhoneNumber() 
+    {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) 
+    {
+        this.phoneNumber = phoneNumber;
+    }
+    
+    public void addObserver(NotificationAlertObserver observer)
+    {
+        observers.add(observer);
+    }
+    
+    public void notifyObservers()
+    {
+        for(NotificationAlertObserver observer: observers)
+        {
+            observer.update();
+        }
+    }
+}
+
+interface NotificationAlertObserver
+{
+    public void update();
+}
+
+class EmailAlertObserver implements NotificationAlertObserver
+{
+    private String email;
+    
+    public EmailAlertObserver(String email)
+    {
+        this.email = email;
+    }
+    
+    @Override
+    public void update()
+    {
+        System.out.println("Sending email to "+ email +": Amount of Rs. is WithDrawn!");
+    }
+}
+
+class PhoneAlertObserver implements NotificationAlertObserver
+{
+    private String phoneno;
+    
+    public PhoneAlertObserver(String phoneno)
+    {
+        this.phoneno = phoneno;
+    }
+    
+    @Override
+    public void update()
+    {
+        System.out.println("Sending email to "+ phoneno +" : Amount of Rs. is WithDrawn!");
+    }
+}
+
+interface AccountController
+{
+    public void createAccount(Account account);
+    public void removeAccount(String accountNumber);
+}
+
+class AccountImpl implements AccountController
+{
+    List<Account> accountsList;
+    
+    public AccountImpl()
+    {
+        accountsList = new ArrayList<>();
+    }
+    
+    @Override
+    public void createAccount(Account account)
+    {
+        accountsList.add(account);
+    }
+    
+    @Override
+    public void removeAccount(String accountNumber)
+    {
+        for(Account account : accountsList)
+        {
+            if(account.getAccountNumber().equals(accountNumber))
+            {
+                accountsList.remove(account);
+            }
+        }
+    }
+}
+
+
+class Account 
+{
+    String accountNumber;
+    String IFSCCode;
+    String cardHoldersName;
+    String PhoneNumber;
+    String aadharCard;
+    CardController cardController;
+    
+    public Account(String accountNumber, String IFSCCode, String cardHoldersName, String PhoneNumber, String aadharCard, CardController cardController)
+    {
+        this.accountNumber = accountNumber;
+        this.IFSCCode = IFSCCode;
+        this.cardHoldersName = cardHoldersName;
+        this.PhoneNumber = PhoneNumber;
+        this.aadharCard = aadharCard;
+        
+        this.cardController = cardController;
+    }
+    
+     public String getAccountNumber() {
+        return accountNumber;
+    }
+
+    public void setAccountNumber(String accountNumber) {
+        this.accountNumber = accountNumber;
+    }
+
+    public String getIFSCCode() {
+        return IFSCCode;
+    }
+
+    public void setIFSCCode(String IFSCCode) {
+        this.IFSCCode = IFSCCode;
+    }
+
+    public String getCardHoldersName() {
+        return cardHoldersName;
+    }
+
+    public void setCardHoldersName(String cardHoldersName) {
+        this.cardHoldersName = cardHoldersName;
+    }
+
+    public String getPhoneNumber() {
+        return PhoneNumber;
+    }
+
+    public void setPhoneNumber(String PhoneNumber) {
+        this.PhoneNumber = PhoneNumber;
+    }
+
+    public String getAadharCard() {
+        return aadharCard;
+    }
+
+    public void setAadharCard(String aadharCard) {
+        this.aadharCard = aadharCard;
+    }
+}
+
+interface CardController
+{
+    public void addCard(Card card);
+    public String removeCard(String cardNumber);
+    public Boolean searchCard(String cardNumber);
+}
+
+class CardImpl implements CardController
+{
+    List<Card> cardsList;
+    
+    public CardImpl()
+    {
+        cardsList = new ArrayList<>();
+    }
+    
+    @Override
+    public void addCard(Card card)
+    {
+        cardsList.add(card);
+    }
+    
+    @Override
+    public String removeCard(String cardNumber)
+    {
+        for(Card card: cardsList)
+        {
+            if(card.getCardNumber().equals(cardNumber))
+            {
+                cardsList.remove(card);
+                return "Card removed !!";
+            }
+        }
+        
+        return "No Card Found!!";
+    }
+    
+    @Override 
+    public Boolean searchCard(String cardNumber)
+    {
+        for(Card card: cardsList)
+        {
+            if(card.getCardNumber().equals(cardNumber))
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+}
+
+class Card
+{
+    String cardNumber;
+    String cardHolderName;
+    String dateOfExpiry;
+    String cvv;
+    String customerID;
+    
+    public Card(String cardNumber, String cardHolderName, String dateOfExpiry, String cvv, String customerID)
+    {
+        this.cardNumber = cardNumber;
+        this.cardHolderName = cardHolderName;
+        this.dateOfExpiry = dateOfExpiry;
+        this.cvv = cvv;
+        this.customerID = customerID;
+    }
+    
+    public String getCustomerID()
+    {
+        return customerID;
+    }
+    
+    public void setCustomerID(String customerID)
+    {
+        this.customerID = customerID;
+    }
+    
+    public String getCardNumber() {
+        return cardNumber;
+    }
+
+    public void setCardNumber(String cardNumber) {
+        this.cardNumber = cardNumber;
+    }
+
+    public String getCardHolderName() {
+        return cardHolderName;
+    }
+
+    public void setCardHolderName(String cardHolderName) {
+        this.cardHolderName = cardHolderName;
+    }
+
+    public String getDateOfExpiry() {
+        return dateOfExpiry;
+    }
+
+    public void setDateOfExpiry(String dateOfExpiry) {
+        this.dateOfExpiry = dateOfExpiry;
+    }
+
+    public String getCvv() {
+        return cvv;
+    }
+
+    public void setCvv(String cvv) {
+        this.cvv = cvv;
+    }
+}
+
+
+
+class Solution 
+{
+    public static void main(String[] args)
+    {
+        Location location = new Location("Anisabad","Patna","Bihar","800002");
+        
+        Notifications  notification = new NotificationImpl();
+        
+        ATM atm = new ATM("1","SBI", location, 10000L);
+        
+        Card card = new Card("554458455287965","Nishant","11/26","871","1");
+        CardController cardController = new CardImpl();
+        cardController.addCard(card);
+        
+        ATMController atmController = new AtmImpl(cardController, notification);
+        atmController.addATM(atm);
+        
+        Account account = new Account("554458455287965", "IFSC8794", "Nishant Raj", "7004458490", "991579853619", cardController);
+        
+        AccountController accountController = new AccountImpl();
+        accountController.createAccount(account);
+        
+        Customer customer = new Customer("1", "Nishant", "800002","7004458490", accountController);
+        CustomerController customerController = new CustomerImpl(notification);
+        customerController.addCustomer(customer);
+        
+        NotificationAlertObserver observeremail = new EmailAlertObserver("nishantraj839@gmail.com");
+        NotificationAlertObserver observerphoneNumber = new PhoneAlertObserver("7004458490");
+        
+        customer.addObserver(observeremail);
+        customer.addObserver(observerphoneNumber);
+        
+        Bank bank = new Bank("1" , "SBI", location, atmController, customerController);
+        
+        atmController.displayATMInformation("1");
+       
+        System.out.println(atmController.withDrawMoney("1", card, 1000L));
+    }
+}
