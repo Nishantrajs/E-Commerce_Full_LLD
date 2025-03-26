@@ -1,0 +1,556 @@
+import java.util.*;
+
+class ClickPost 
+{
+    String uniqueID;
+    String name;
+    String revenue;
+    String type;
+    VendorController vendorController;
+    
+    public ClickPost(String uniqueID, String name, String revenue, String type, VendorController vendorController)
+    {
+        this.uniqueID = uniqueID;
+        this.name = name;
+        this.revenue = revenue;
+        this.type = type;
+        this.vendorController = vendorController;
+    }
+    
+    public int CalculateMinimum(Location location,int loadsOfProduct)
+    {
+        int minAmount = vendorController.CalculateMinimum(location,loadsOfProduct);
+        return minAmount;
+    }
+}
+
+interface VendorController
+{
+    public void addVendor(Location location,Vendor vendor);
+    public void removeVendor(Location location,String vendorID);
+    public void updateVendor(Location location, Vendor vendor);
+    public int CalculateMinimum(Location location,int loadsOfProduct);
+}
+
+class VendorImpl implements VendorController
+{
+    Map<Location,List<Vendor>> vendorsList;
+    
+    public VendorImpl()
+    {
+        vendorsList = new HashMap<>();
+    }
+    
+    @Override
+    public void addVendor(Location location, Vendor vendor)
+    {
+        if(!vendorsList.containsKey(location))
+        {
+           vendorsList.put(location, new ArrayList<>()); 
+        }
+       
+        vendorsList.get(location).add(vendor);
+    }
+    
+    @Override 
+    public void removeVendor(Location location, String vendorID)
+    {
+        List<Vendor> vendorListByLocation = vendorsList.get(location);
+        
+        for(Vendor vendor : vendorListByLocation)
+        {
+            if(vendor.getVendorID().equals(vendorID))
+            {
+                vendorListByLocation.remove(vendorID);
+            }
+        }
+        
+        vendorsList.put(location, vendorListByLocation);
+    }
+    
+   @Override 
+   public void updateVendor(Location location, Vendor vendor)
+   {
+        List<Vendor> vendorListByLocation = vendorsList.get(location);
+        
+        for (int i = 0; i < vendorListByLocation.size(); i++) 
+        {
+            if (vendorListByLocation.get(i).getVendorID().equals(vendor.getVendorID()))
+            {
+                vendorListByLocation.set(i, vendor);
+            }
+        }
+    }
+    
+    @Override 
+    public int CalculateMinimum(Location location,int loadsOfProduct)
+    {
+         List<Vendor> vendorListByLocation = vendorsList.get(location);
+         int minimum = Integer.MAX_VALUE;
+         
+          for(Vendor vendor : vendorListByLocation)
+          {
+              minimum = Math.min(minimum,  loadsOfProduct * vendor.getCostPerKg());
+          }
+          
+          return minimum;
+    }
+}
+
+class Location
+{
+    String uniqueLocationID;
+    String name;
+    String city;
+    String state;
+    String pinCode;
+    
+    public Location(String uniqueLocationID, String name, String city, String state, String pinCode)
+    {
+        this.uniqueLocationID = uniqueLocationID;
+        this.name = name;
+        this.city = city;
+        this.state = state;
+        this.pinCode = pinCode;
+    }
+}
+
+class Vendor
+{
+    private String vendorID;
+    private String vendorName;
+    private String vendorRevenue;
+    private String vendorType;
+    private int costPerKg;
+
+    public Vendor(String vendorID, String vendorName, String vendorRevenue, String vendorType, int costPerKg) {
+        this.vendorID = vendorID;
+        this.vendorName = vendorName;
+        this.vendorRevenue = vendorRevenue;
+        this.vendorType = vendorType;
+        this.costPerKg = costPerKg;
+    }
+
+    public String getVendorID() {
+        return vendorID;
+    }
+
+    public void setVendorID(String vendorID) {
+        this.vendorID = vendorID;
+    }
+
+    public String getVendorName() {
+        return vendorName;
+    }
+
+    public void setVendorName(String vendorName) {
+        this.vendorName = vendorName;
+    }
+
+    public String getVendorRevenue() {
+        return vendorRevenue;
+    }
+
+    public void setVendorRevenue(String vendorRevenue) {
+        this.vendorRevenue = vendorRevenue;
+    }
+
+    public String getVendorType() {
+        return vendorType;
+    }
+
+    public void setVendorType(String vendorType) {
+        this.vendorType = vendorType;
+    }
+    
+    public int getCostPerKg()
+    {
+        return costPerKg;
+    }
+    
+    public void setCostPerKg(int costPerKg)
+    {
+        this.costPerKg = costPerKg;
+    }
+}
+
+public class Main 
+{
+    public static void main(String[] args) 
+    {
+        VendorController vendorController = new VendorImpl();
+        Location location1 = new Location("L001", "Warehouse 1", "New York", "NY", "10001");
+        Location location2 = new Location("L002", "Warehouse 2", "Los Angeles", "CA", "90001");
+
+        Vendor vendor1 = new Vendor("V001", "Blue Dart", "$1000", "Courier", 10);
+        Vendor vendor2 = new Vendor("V002", "India Post", "$800", "Postal", 15);
+        Vendor vendor3 = new Vendor("V003", "DTDC", "$1200", "Courier", 8);
+
+        vendorController.addVendor(location1, vendor1);
+        vendorController.addVendor(location1, vendor2);
+        vendorController.addVendor(location2, vendor3);
+import java.util.*;
+
+class ClickPost 
+{
+    String uniqueID;
+    String name;
+    String revenue;
+    String type;
+    VendorController vendorController;
+    DispatchController dispatchController;
+    
+    public ClickPost(String uniqueID, String name, String revenue, String type, VendorController vendorController, DispatchController dispatchController)
+    {
+        this.uniqueID = uniqueID;
+        this.name = name;
+        this.revenue = revenue;
+        this.type = type;
+        this.vendorController = vendorController;
+        this.dispatchController = dispatchController;
+    }
+    
+    public String CalculateMinimum(Location location,int loadsOfProduct)
+    {
+        String vendorID = vendorController.CalculateMinimum(location,loadsOfProduct);
+        return vendorID;
+    }
+}
+
+interface VendorController
+{
+    public void addVendor(Location location,Vendor vendor);
+    public void removeVendor(Location location,String vendorID);
+    public void updateVendor(Location location, Vendor vendor);
+    public String CalculateMinimum(Location location,int loadsOfProduct);
+}
+
+class VendorImpl implements VendorController
+{
+    Map<Location,List<Vendor>> vendorsList;
+    
+    public VendorImpl()
+    {
+        vendorsList = new HashMap<>();
+    }
+    
+    @Override
+    public void addVendor(Location location, Vendor vendor)
+    {
+        if(!vendorsList.containsKey(location))
+        {
+           vendorsList.put(location, new ArrayList<>()); 
+        }
+       
+        vendorsList.get(location).add(vendor);
+    }
+    
+    @Override 
+    public void removeVendor(Location location, String vendorID)
+    {
+        List<Vendor> vendorListByLocation = vendorsList.get(location);
+        
+        for(Vendor vendor : vendorListByLocation)
+        {
+            if(vendor.getVendorID().equals(vendorID))
+            {
+                vendorListByLocation.remove(vendorID);
+            }
+        }
+        
+        vendorsList.put(location, vendorListByLocation);
+    }
+    
+   @Override 
+   public void updateVendor(Location location, Vendor vendor)
+   {
+        List<Vendor> vendorListByLocation = vendorsList.get(location);
+        
+        for (int i = 0; i < vendorListByLocation.size(); i++) 
+        {
+            if (vendorListByLocation.get(i).getVendorID().equals(vendor.getVendorID()))
+            {
+                vendorListByLocation.set(i, vendor);
+            }
+        }
+    }
+    
+    @Override 
+    public String CalculateMinimum(Location location,int loadsOfProduct)
+    {
+         List<Vendor> vendorListByLocation = vendorsList.get(location);
+         int minimum = Integer.MAX_VALUE;
+         List<Integer> amountList = new ArrayList<>();
+         
+          for(Vendor vendor : vendorListByLocation)
+          {
+              minimum = Math.min(minimum,  loadsOfProduct * vendor.getCostPerKg());
+              amountList.add(loadsOfProduct* vendor.getCostPerKg());
+          }
+          
+          System.out.println("The minimum amount for all the vendors of this location is "+ minimum);
+          
+          int minValue = Collections.min(amountList);
+          int minIndex = amountList.indexOf(minValue);
+          
+          Vendor vendor = vendorListByLocation.get(minIndex);
+          
+          return vendor.getVendorID();
+    }
+}
+
+class Location
+{
+    String uniqueLocationID;
+    String name;
+    String city;
+    String state;
+    String pinCode;
+    
+    public Location(String uniqueLocationID, String name, String city, String state, String pinCode)
+    {
+        this.uniqueLocationID = uniqueLocationID;
+        this.name = name;
+        this.city = city;
+        this.state = state;
+        this.pinCode = pinCode;
+    }
+}
+
+class Vendor
+{
+    private String vendorID;
+    private String vendorName;
+    private String vendorRevenue;
+    private String vendorType;
+    private int costPerKg;
+
+    public Vendor(String vendorID, String vendorName, String vendorRevenue, String vendorType, int costPerKg) {
+        this.vendorID = vendorID;
+        this.vendorName = vendorName;
+        this.vendorRevenue = vendorRevenue;
+        this.vendorType = vendorType;
+        this.costPerKg = costPerKg;
+    }
+
+    public String getVendorID() {
+        return vendorID;
+    }
+
+    public void setVendorID(String vendorID) {
+        this.vendorID = vendorID;
+    }
+
+    public String getVendorName() {
+        return vendorName;
+    }
+
+    public void setVendorName(String vendorName) {
+        this.vendorName = vendorName;
+    }
+
+    public String getVendorRevenue() {
+        return vendorRevenue;
+    }
+
+    public void setVendorRevenue(String vendorRevenue) {
+        this.vendorRevenue = vendorRevenue;
+    }
+
+    public String getVendorType() {
+        return vendorType;
+    }
+
+    public void setVendorType(String vendorType) {
+        this.vendorType = vendorType;
+    }
+    
+    public int getCostPerKg()
+    {
+        return costPerKg;
+    }
+    
+    public void setCostPerKg(int costPerKg)
+    {
+        this.costPerKg = costPerKg;
+    }
+}
+
+class Customer 
+{
+    String customerID;
+    String customerName;
+    String customerPhoneNo;
+    String customerAadhar;
+    
+    List<NotificationAlertObserver> observersList;
+    
+    public Customer(String customerID, String customerName, String customerPhoneNo, String customerAadhar)
+    {
+        this.customerID = customerID;
+        this.customerName = customerName;
+        this.customerPhoneNo = customerPhoneNo;
+        this.customerAadhar = customerAadhar;
+        
+        observersList = new ArrayList<>();
+    }
+    
+    public String getCustomerID()
+    {
+        return customerID;
+    }
+    
+    public void addObservers(NotificationAlertObserver observer)
+    {
+        observersList.add(observer);
+    }
+    
+    public void NotifyObservers()
+    {
+        for(NotificationAlertObserver observer : observersList)
+        {
+            observer.update();
+        }
+    }
+}
+
+interface DispatchController
+{
+    public void addCustomer(Location location, Customer customer);
+    public void removeCustomer(Location location,String customerID);
+    public void NotifyCustomers(Location location);
+}
+
+class DispatchImpl implements DispatchController
+{
+    Map<Location, List<Customer>> customersList;
+    
+    public DispatchImpl()
+    {
+        customersList = new HashMap<>();
+    }
+    
+    @Override 
+    public void addCustomer(Location location, Customer customer)
+    {
+        if(!customersList.containsKey(location))
+        {
+            customersList.put(location, new ArrayList<>());
+        }
+        
+        customersList.get(location).add(customer);
+    }
+    
+    @Override
+    public void removeCustomer(Location location,String customerID)
+    {
+       // will add laterly
+       return;
+    }
+    
+    @Override
+    public void NotifyCustomers(Location location)
+    {
+        List<Customer> customerListByLocation = new ArrayList<>();
+        
+        customerListByLocation = customersList.get(location);
+        
+        for(Customer customer : customerListByLocation)
+        {
+            customer.NotifyObservers();
+        }
+    }
+}
+
+interface NotificationAlertObserver
+{
+    public void update();
+}
+
+class EmailAlertObserver implements NotificationAlertObserver
+{
+    String email;
+    
+    public EmailAlertObserver(String email)
+    {
+        this.email = email;
+    }
+    
+    @Override
+    public void update()
+    {
+        System.out.println("Product has been Dispatched !! Mail sent to "+ email);
+    }
+}
+
+class PhoneAlertObserver implements NotificationAlertObserver
+{
+    String phoneno;
+    
+    public PhoneAlertObserver(String email)
+    {
+        this.phoneno = phoneno;
+    }
+    
+    @Override
+    public void update()
+    {
+        System.out.println("Product has been Sent!! Msg sent on Phone Number "+ phoneno);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        VendorController vendorController = new VendorImpl();
+        Location location1 = new Location("L001", "Warehouse 1", "New York", "NY", "10001");
+        Location location2 = new Location("L002", "Warehouse 2", "Los Angeles", "CA", "90001");
+
+        Vendor vendor1 = new Vendor("V001", "Blue Dart", "$1000", "Courier", 10);
+        Vendor vendor2 = new Vendor("V002", "India Post", "$800", "Postal", 15);
+        Vendor vendor3 = new Vendor("V003", "DTDC", "$1200", "Courier", 8);
+
+        vendorController.addVendor(location1, vendor1);
+        vendorController.addVendor(location1, vendor2);
+        vendorController.addVendor(location2, vendor3);
+
+        DispatchController dispatchController = new DispatchImpl();
+        
+        Customer customer1 = new Customer("C001", "John Doe", "1234567890", "Aadhar123");
+        Customer customer2 = new Customer("C002", "Jane Smith", "0987654321", "Aadhar456");
+        
+        dispatchController.addCustomer(location1, customer1);
+        dispatchController.addCustomer(location2, customer2);
+        
+        NotificationAlertObserver emailObserver1 = new EmailAlertObserver("john.doe@example.com");
+        NotificationAlertObserver phoneObserver1 = new PhoneAlertObserver("1234567890");
+        NotificationAlertObserver emailObserver2 = new EmailAlertObserver("jane.smith@example.com");
+        NotificationAlertObserver phoneObserver2 = new PhoneAlertObserver("0987654321");
+
+        customer1.addObservers(emailObserver1);
+        customer1.addObservers(phoneObserver1);
+        customer2.addObservers(emailObserver2);
+        customer2.addObservers(phoneObserver2);
+        
+        ClickPost clickPost = new ClickPost("CP001", "ClickPost Logistics", "$100000", "Logistics", vendorController, dispatchController);
+
+        String minCostLocation1 = clickPost.CalculateMinimum(location1, 100);
+        String minCostLocation2 = clickPost.CalculateMinimum(location2, 50);
+
+        System.out.println("Vendor ID for location 1: " + minCostLocation1);
+        System.out.println("Vendor ID for location 2: " + minCostLocation2);
+
+        System.out.println("\nNotifying customers about product dispatch...\n");
+
+        dispatchController.NotifyCustomers(location1);
+        dispatchController.NotifyCustomers(location2);
+    }
+}        ClickPost clickPost = new ClickPost("CP001", "ClickPost Logistics", "$100000", "Logistics", vendorController);
+
+        int minCostLocation1 = clickPost.CalculateMinimum(location1, 100);
+        int minCostLocation2 = clickPost.CalculateMinimum(location2, 50);
+
+        System.out.println("Minimum cost for location 1: " + minCostLocation1);
+        System.out.println("Minimum cost for location 2: " + minCostLocation2);
+    }
+}
+
